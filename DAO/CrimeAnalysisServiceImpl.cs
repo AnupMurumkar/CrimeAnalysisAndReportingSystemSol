@@ -1,0 +1,270 @@
+﻿using CrimeAnalysisAndReportingSystemSol.Entity;
+using CrimeAnalysisAndReportingSystemSol.Util;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient;
+
+namespace CrimeAnalysisAndReportingSystemSol.Dao
+{
+    public class CrimeAnalysisServiceImpl : ICrimeAnalysisService
+    {
+        // Static connection variable
+        private static SqlConnection connection;
+
+        // Constructor to initialize the connection using DBConnection class
+        public CrimeAnalysisServiceImpl()
+        {
+            connection = DBConnection.GetConnection();
+        }
+
+        // Create a new incident
+        public bool CreateIncident(Incident incident)
+        {
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO Incidents (IncidentType, IncidentDate, Location, Description, Status, VictimID, SuspectID) VALUES (@type, @date, @location, @description, @status, @victimId, @suspectId)", connection))
+                {
+                    cmd.Parameters.AddWithValue("@type", incident.IncidentType);
+                    cmd.Parameters.AddWithValue("@date", incident.IncidentDate);
+                    cmd.Parameters.AddWithValue("@location", incident.Location);
+                    cmd.Parameters.AddWithValue("@description", incident.Description);
+                    cmd.Parameters.AddWithValue("@status", incident.Status);
+                    cmd.Parameters.AddWithValue("@victimId", incident.VictimId);
+                    cmd.Parameters.AddWithValue("@suspectId", incident.SuspectId);
+                    
+
+
+                    connection.Open();
+                    int rows = cmd.ExecuteNonQuery();
+                    connection.Close();
+
+                    return rows > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error creating incident: " + ex.Message);
+                return false;
+            }
+        }
+
+        // Update the status of an incident
+        public bool UpdateIncidentStatus(int incidentId, string status)
+        {
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("UPDATE Incidents SET Status = @status WHERE IncidentID = @id", connection))
+                {
+                    cmd.Parameters.AddWithValue("@status", status);
+                    cmd.Parameters.AddWithValue("@id", incidentId);
+
+                    connection.Open();
+                    int rows = cmd.ExecuteNonQuery();
+                    connection.Close();
+
+                    return rows > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error updating incident status: " + ex.Message);
+                return false;
+            }
+        }
+
+        // Get a list of incidents within a date range
+        public List<Incident> GetIncidentsInDateRange(DateTime startDate, DateTime endDate)
+        {
+            List<Incident> incidents = new List<Incident>();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Incidents WHERE IncidentDate BETWEEN @start AND @end", connection))
+                {
+                    cmd.Parameters.AddWithValue("@start", startDate);
+                    cmd.Parameters.AddWithValue("@end", endDate);
+
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Incident incident = new Incident
+                            {
+                                IncidentId = (int)reader["IncidentID"],
+                                IncidentType = reader["IncidentType"].ToString(),
+                                IncidentDate = (DateTime)reader["IncidentDate"],
+                                Location = reader["Location"].ToString(),
+                                Description = reader["Description"].ToString(),
+                                Status = reader["Status"].ToString(),
+                                VictimId = (int)reader["VictimID"],
+                                SuspectId = (int)reader["SuspectID"]
+                            };
+                            incidents.Add(incident);
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error retrieving incidents: " + ex.Message);
+            }
+
+            return incidents;
+        }
+
+        // Search for incidents based on incident type
+        public List<Incident> SearchIncidents(string incidentType)
+        {
+            List<Incident> incidents = new List<Incident>();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Incidents WHERE IncidentType = @type", connection))
+                {
+                    cmd.Parameters.AddWithValue("@type", incidentType);
+
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Incident incident = new Incident
+                            {
+                                IncidentId = (int)reader["IncidentID"],
+                                IncidentType = reader["IncidentType"].ToString(),
+                                IncidentDate = (DateTime)reader["IncidentDate"],
+                                Location = reader["Location"].ToString(),
+                                Description = reader["Description"].ToString(),
+                                Status = reader["Status"].ToString(),
+                                VictimId = (int)reader["VictimID"],
+                                SuspectId = (int)reader["SuspectID"]
+                            };
+                            incidents.Add(incident);
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error searching incidents: " + ex.Message);
+            }
+
+            return incidents;
+        }
+
+        // Generate an incident report
+        public Report GenerateIncidentReport(Incident incident)
+        {
+            Report report = new Report();
+            try
+            {
+                // Logic to generate a report for the incident
+                report.ReportId = new Random().Next(1000, 9999); // Generating a random report ID
+                report.IncidentId = incident.IncidentId;
+                report.ReportDetails = $"Report for Incident: {incident.Description}\nLocation: {incident.Location}\nDate: {incident.IncidentDate}\nStatus: {incident.Status}";
+                report.ReportDate = DateTime.Now; // Setting the current date as the report date
+                report.Status = "Draft"; // Initial status as "Draft"
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error generating report: " + ex.Message);
+            }
+            return report;
+        }
+
+        // Create a new case and associate it with incidents
+        public Case CreateCase(string caseDescription, ICollection<Incident> incidents)
+        {
+            Case newCase = new Case();
+            try
+            {
+                newCase.CaseId = new Random().Next(1000, 9999);
+                newCase.CaseDescription = caseDescription;
+                newCase.Incidents = incidents;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error creating case: " + ex.Message);
+            }
+            return newCase;
+        }
+        // Get details of a specific case
+        public Case GetCaseDetails(int caseId)
+        {
+            Case caseDetails = new Case();
+            try
+            {
+                // Logic to retrieve case details from the database
+                // Placeholder implementation:
+                caseDetails.CaseId = caseId;
+                caseDetails.CaseDescription = "Case details for ID: " + caseId;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error retrieving case details: " + ex.Message);
+            }
+            return caseDetails;
+        }
+
+        // Update case details
+        public bool UpdateCaseDetails(Case updatedCase)
+        {
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("UPDATE Cases SET CaseDescription = @description, Status = @status WHERE CaseID = @id", connection))
+                {
+                    cmd.Parameters.AddWithValue("@description", updatedCase.CaseDescription);
+                    cmd.Parameters.AddWithValue("@status", updatedCase.status);
+                    cmd.Parameters.AddWithValue("@id", updatedCase.CaseId);
+
+                    connection.Open();
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    connection.Close();
+
+                    return rowsAffected > 0; 
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error updating case details: " + ex.Message);
+                return false;
+            }
+        }
+
+        List<Case> ICrimeAnalysisService.GetAllCases()
+        {
+            List<Case> cases = new List<Case>();
+            try
+            {
+                using (SqlCommand cmd = new SqlCommand("SELECT * FROM Cases", connection))
+                {
+                    connection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Case caseItem = new Case
+                            {
+                                CaseId = (int)reader["CaseID"],
+                                CaseDescription = reader["CaseDescription"].ToString(),
+                                CreatedDate = (DateTime)reader["CreatedDate"],
+                                Status = reader["Status"].ToString()
+                            };
+                            cases.Add(caseItem);
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error retrieving cases: " + ex.Message);
+            }
+
+            return cases;
+        }
+    }
+}
