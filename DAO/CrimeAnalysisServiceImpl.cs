@@ -10,18 +10,19 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
 {
     public class CrimeAnalysisServiceImpl : ICrimeAnalysisService
     {
-        // Static connection variable
-        private static SqlConnection connection;
+        private string conn;
+        
 
-        // Constructor to initialize the connection using DBConnection class
         public CrimeAnalysisServiceImpl()
         {
-            connection = DBConnection.GetConnection();
+            conn = DBConnection.ReturnCn("CrimeAnalysisAndReportingSystemCn");
+            SqlConnection connection = new SqlConnection(conn);
         }
 
         // Create a new incident
         public bool CreateIncident(Incident incident)
         {
+            SqlConnection connection = new SqlConnection(conn);
             try
             {
                 using (SqlCommand cmd = new SqlCommand("INSERT INTO Incidents (IncidentType, IncidentDate, Location, Description, Status, VictimID, SuspectID) VALUES (@type, @date, @location, @description, @status, @victimId, @suspectId)", connection))
@@ -53,6 +54,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         // Update the status of an incident
         public bool UpdateIncidentStatus(int incidentId, string status)
         {
+            SqlConnection connection = new SqlConnection(conn);
             try
             {
                 using (SqlCommand cmd = new SqlCommand("UPDATE Incidents SET Status = @status WHERE IncidentID = @id", connection))
@@ -78,6 +80,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         public List<Incident> GetIncidentsInDateRange(DateTime startDate, DateTime endDate)
         {
             List<Incident> incidents = new List<Incident>();
+            SqlConnection connection = new SqlConnection(conn);
             try
             {
                 using (SqlCommand cmd = new SqlCommand("SELECT * FROM Incidents WHERE IncidentDate BETWEEN @start AND @end", connection))
@@ -118,6 +121,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         // Search for incidents based on incident type
         public List<Incident> SearchIncidents(string incidentType)
         {
+            SqlConnection connection = new SqlConnection(conn);
             List<Incident> incidents = new List<Incident>();
             try
             {
@@ -158,15 +162,16 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         // Generate an incident report
         public Report GenerateIncidentReport(Incident incident)
         {
+            SqlConnection connection = new SqlConnection(conn);
             Report report = new Report();
             try
             {
-                // Logic to generate a report for the incident
-                report.ReportId = new Random().Next(1000, 9999); // Generating a random report ID
+                
+                report.ReportId = new Random().Next(1000, 9999); 
                 report.IncidentId = incident.IncidentId;
                 report.ReportDetails = $"Report for Incident: {incident.Description}\nLocation: {incident.Location}\nDate: {incident.IncidentDate}\nStatus: {incident.Status}";
-                report.ReportDate = DateTime.Now; // Setting the current date as the report date
-                report.Status = "Draft"; // Initial status as "Draft"
+                report.ReportDate = DateTime.Now; 
+                report.Status = "Draft"; 
             }
             catch (Exception ex)
             {
@@ -178,6 +183,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         // Create a new case and associate it with incidents
         public Case CreateCase(string caseDescription, ICollection<Incident> incidents)
         {
+            SqlConnection connection = new SqlConnection(conn);
             Case newCase = new Case();
             try
             {
@@ -194,11 +200,11 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         // Get details of a specific case
         public Case GetCaseDetails(int caseId)
         {
+            SqlConnection connection = new SqlConnection(conn);
             Case caseDetails = new Case();
             try
             {
-                // Logic to retrieve case details from the database
-                // Placeholder implementation:
+                
                 caseDetails.CaseId = caseId;
                 caseDetails.CaseDescription = "Case details for ID: " + caseId;
             }
@@ -212,6 +218,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         // Update case details
         public bool UpdateCaseDetails(Case updatedCase)
         {
+            SqlConnection connection = new SqlConnection(conn);
             try
             {
                 using (SqlCommand cmd = new SqlCommand("UPDATE Cases SET CaseDescription = @description, Status = @status WHERE CaseID = @id", connection))
@@ -236,6 +243,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
 
         List<Case> ICrimeAnalysisService.GetAllCases()
         {
+            SqlConnection connection = new SqlConnection(conn);
             List<Case> cases = new List<Case>();
             try
             {

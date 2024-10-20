@@ -1,33 +1,27 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Data.SqlClient;
 
 namespace CrimeAnalysisAndReportingSystemSol.Util
-{
-    public class DBConnection
-    {
-        private static SqlConnection connection;
-
-        // Connection string (as provided)
-        private static readonly string connectionString = "Data Source=LAPTOP-8JT18MT0;Initial Catalog=CrimeReportingSystem;Integrated Security=True;Trust Server Certificate=True";
-
-        // Static method to return a SQL connection object
-        public static SqlConnection GetConnection()
-        {
-            if (connection == null || connection.State == System.Data.ConnectionState.Closed)
+{    
+    public static class DBConnection
+      {
+            private static IConfigurationRoot _configuration;
+            static string s = null;
+            static DBConnection()
             {
-                try
-                {
-                    // Initialize SQL Connection using the provided connection string
-                    connection = new SqlConnection(connectionString);
-                    connection.Open(); // Open the connection
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception("Error establishing database connection: " + ex.Message);
-                }
+                var builder = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                   .AddJsonFile("F:\\HEXAWARE C# CODES\\CrimeAnalysisAndReportingSystemSol\\Util\\AppSettings.json",
+                   optional: true, reloadOnChange: true);
+                _configuration = builder.Build();
             }
+            public static string ReturnCn(string key)
+            {
 
-            return connection;
+                s = _configuration.GetConnectionString("CrimeAnalysisAndReportingSystemCn");
+
+                return s;
+            }
         }
-    }
 }
