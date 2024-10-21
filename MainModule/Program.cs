@@ -74,7 +74,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Main
         {
             Incident newIncident = new Incident
             {
-                IncidentId = 23,
+               
                 IncidentType = "Robbery",
                 IncidentDate = DateTime.Now,
                 Location = "123 Main Street",
@@ -167,21 +167,22 @@ namespace CrimeAnalysisAndReportingSystemSol.Main
         {
             try
             {
+                // Input case description
                 Console.WriteLine("Enter Case Description:");
                 string caseDescription = Console.ReadLine();
 
-                // Prompt the user to enter the incident IDs to associate with the case
-                Console.WriteLine("Enter the Incident IDs to associate with the case (comma-separated):");
+                // Input incidents (only stored in memory, not in the database)
+                Console.WriteLine("Enter Incident IDs to associate with the case (comma-separated):");
                 string incidentIdsInput = Console.ReadLine();
                 string[] incidentIds = incidentIdsInput.Split(',');
 
-                // Retrieve the incidents from the database
+                // Retrieve incidents by their IDs (stored in memory only)
                 List<Incident> caseIncidents = new List<Incident>();
                 foreach (string incidentIdStr in incidentIds)
                 {
                     if (int.TryParse(incidentIdStr.Trim(), out int incidentId))
                     {
-                        Incident incident = crimeService.GetIncidentById(incidentId); // Assuming you have GetIncidentById method
+                        Incident incident = crimeService.GetIncidentById(incidentId); // Assuming GetIncidentById method exists
                         if (incident != null)
                         {
                             caseIncidents.Add(incident);
@@ -197,6 +198,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Main
                     }
                 }
 
+                // Create case with incidents (incidents are not stored in the database)
                 if (caseIncidents.Count > 0)
                 {
                     Case newCase = crimeService.CreateCase(caseDescription, caseIncidents);
@@ -204,12 +206,12 @@ namespace CrimeAnalysisAndReportingSystemSol.Main
                 }
                 else
                 {
-                    Console.WriteLine("No valid incidents were provided. Case not created.");
+                    Console.WriteLine("No valid incidents were provided. Case created without incident association.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error creating case: {ex.Message}");
+                Console.WriteLine("Error: " + ex.Message);
             }
         }
 

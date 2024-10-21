@@ -26,10 +26,10 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
             SqlConnection connection = new SqlConnection(conn);
             try
             {
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO Incidents (IncidentId , IncidentType, IncidentDate, Location, Description, Status, VictimID, SuspectID) VALUES (@id,@type, @date, @location, @description, @status, @victimId, @suspectId)", connection))
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO Incidents ( IncidentType, IncidentDate, Location, Description, Status, VictimID, SuspectID) VALUES (@type, @date, @location, @description, @status, @victimId, @suspectId)", connection))
                 {
-                    cmd.Parameters.AddWithValue("@id", incident.IncidentId);
-                    cmd.Parameters.AddWithValue("@type", incident.IncidentType);
+                    
+                   cmd.Parameters.AddWithValue("@type", incident.IncidentType);
                     cmd.Parameters.AddWithValue("@date", incident.IncidentDate);
                     cmd.Parameters.AddWithValue("@location", incident.Location);
                     cmd.Parameters.AddWithValue("@description", incident.Description);
@@ -223,17 +223,16 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
 
             try
             {
-                // Generate a random Case ID
-                newCase.CaseId = new Random().Next(1000, 9999);
+                // Step 1: Generate a new Case ID and set case details
+                newCase.CaseId = new Random().Next(1000, 9999);  // Generate random ID (can be changed to auto-generated in DB)
                 newCase.CaseDescription = caseDescription;
-                newCase.Incidents = incidents;
-                newCase.CreatedDate = DateTime.Now; // Add created date
-                newCase.Status = "Open"; // Set initial status as 'Open'
+                newCase.CreatedDate = DateTime.Now;  // Set current timestamp
+                newCase.Status = "Open";  // Initial status as 'Open'
+                newCase.Incidents = incidents;  // This will hold associated incidents in memory (not in DB)
 
-                // Open database connection
                 connection.Open();
 
-                // 1. Insert the case into the Cases table
+                // Step 2: Insert the new case into the Cases table
                 using (SqlCommand cmd = new SqlCommand("INSERT INTO Cases (CaseID, CaseDescription, CreatedDate, Status) VALUES (@id, @description, @createdDate, @status)", connection))
                 {
                     cmd.Parameters.AddWithValue("@id", newCase.CaseId);
@@ -253,27 +252,6 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     }
                 }
 
-                // 2. Insert each incident associated with the case into the Case_Incidents table
-                foreach (var incident in incidents)
-                {
-                    using (SqlCommand cmd = new SqlCommand("INSERT INTO Case_Incidents (CaseID, IncidentID) VALUES (@caseId, @incidentId)", connection))
-                    {
-                        cmd.Parameters.AddWithValue("@caseId", newCase.CaseId);
-                        cmd.Parameters.AddWithValue("@incidentId", incident.IncidentId);
-
-                        int caseIncidentRows = cmd.ExecuteNonQuery();
-
-                        if (caseIncidentRows > 0)
-                        {
-                            Console.WriteLine($"Incident {incident.IncidentId} associated with case {newCase.CaseId}.");
-                        }
-                        else
-                        {
-                            throw new Exception($"Failed to associate incident {incident.IncidentId} with case {newCase.CaseId}.");
-                        }
-                    }
-                }
-
                 connection.Close();
             }
             catch (Exception ex)
@@ -287,6 +265,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
 
             return newCase;
         }
+
 
         // Get details of a specific case
         public Case GetCaseDetails(int caseId)
@@ -430,18 +409,55 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
 
         public Incident GetIncidentById(int incidentId)
         {
+            SqlConnection connection = new SqlConnection(conn);
+            Incident incident = null;
 
-            Incident incident = new Incident();
-            Console.WriteLine($"Incident ID: {incident.IncidentId}");
+            try
+            {
+                connection.Open();
 
-            if (incidentId == incident.IncidentId)
-            {
-                return incident;
+                // SQL Query to get the incident by ID
+                using (SqlCommand cmd = new SqlCommand("SELECT IncidentID, IncidentType, IncidentDate, Location, Description, Status, VictimID, SuspectID FROM Incidents WHERE IncidentID = @id", connection))
+                {
+                    cmd.Parameters.AddWithValue("@id", incidentId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            // Populate the incident object if a record is found
+                            incident = new Incident
+                            {
+                                IncidentId = (int)reader["IncidentID"],
+                                IncidentType = reader["IncidentType"].ToString(),
+                                IncidentDate = (DateTime)reader["IncidentDate"],
+                                Location = reader["Location"].ToString(),
+                                Description = reader["Description"].ToString(),
+                                Status = reader["Status"].ToString(),
+                                VictimId = (int)reader["VictimID"],
+                                SuspectId = (int)reader["SuspectID"]
+                            };
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Incident with ID {incidentId} not found.");
+                        }
+                    }
+                }
+
+                connection.Close();
             }
-            else
+            catch (Exception ex)
             {
-                throw new IncidentNumberNotFoundException("enter correct incident ID");
+                Console.WriteLine("Error retrieving incident: " + ex.Message);
+                if (connection.State == System.Data.ConnectionState.Open)
+                {
+                    connection.Close();
+                }
             }
+
+            return incident;
         }
+
     }
 }
