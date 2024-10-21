@@ -26,8 +26,9 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
             SqlConnection connection = new SqlConnection(conn);
             try
             {
-                using (SqlCommand cmd = new SqlCommand("INSERT INTO Incidents (IncidentType, IncidentDate, Location, Description, Status, VictimID, SuspectID) VALUES (@type, @date, @location, @description, @status, @victimId, @suspectId)", connection))
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO Incidents (IncidentId , IncidentType, IncidentDate, Location, Description, Status, VictimID, SuspectID) VALUES (@id,@type, @date, @location, @description, @status, @victimId, @suspectId)", connection))
                 {
+                    cmd.Parameters.AddWithValue("@id", incident.IncidentId);
                     cmd.Parameters.AddWithValue("@type", incident.IncidentType);
                     cmd.Parameters.AddWithValue("@date", incident.IncidentDate);
                     cmd.Parameters.AddWithValue("@location", incident.Location);
@@ -39,7 +40,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     connection.Open();
                     int rows = cmd.ExecuteNonQuery();
                     connection.Close();
-
+                    
                     return rows > 0;
                 }
             }
@@ -219,35 +220,153 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
         {
             SqlConnection connection = new SqlConnection(conn);
             Case newCase = new Case();
+
             try
             {
+                // Generate a random Case ID
                 newCase.CaseId = new Random().Next(1000, 9999);
                 newCase.CaseDescription = caseDescription;
                 newCase.Incidents = incidents;
+                newCase.CreatedDate = DateTime.Now; // Add created date
+                newCase.Status = "Open"; // Set initial status as 'Open'
+
+                // Open database connection
+                connection.Open();
+
+                // 1. Insert the case into the Cases table
+                using (SqlCommand cmd = new SqlCommand("INSERT INTO Cases (CaseID, CaseDescription, CreatedDate, Status) VALUES (@id, @description, @createdDate, @status)", connection))
+                {
+                    cmd.Parameters.AddWithValue("@id", newCase.CaseId);
+                    cmd.Parameters.AddWithValue("@description", newCase.CaseDescription);
+                    cmd.Parameters.AddWithValue("@createdDate", newCase.CreatedDate);
+                    cmd.Parameters.AddWithValue("@status", newCase.Status);
+
+                    int caseRows = cmd.ExecuteNonQuery();
+
+                    if (caseRows > 0)
+                    {
+                        Console.WriteLine("Case created successfully.");
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to create case.");
+                    }
+                }
+
+                // 2. Insert each incident associated with the case into the Case_Incidents table
+                foreach (var incident in incidents)
+                {
+                    using (SqlCommand cmd = new SqlCommand("INSERT INTO Case_Incidents (CaseID, IncidentID) VALUES (@caseId, @incidentId)", connection))
+                    {
+                        cmd.Parameters.AddWithValue("@caseId", newCase.CaseId);
+                        cmd.Parameters.AddWithValue("@incidentId", incident.IncidentId);
+
+                        int caseIncidentRows = cmd.ExecuteNonQuery();
+
+                        if (caseIncidentRows > 0)
+                        {
+                            Console.WriteLine($"Incident {incident.IncidentId} associated with case {newCase.CaseId}.");
+                        }
+                        else
+                        {
+                            throw new Exception($"Failed to associate incident {incident.IncidentId} with case {newCase.CaseId}.");
+                        }
+                    }
+                }
+
+                connection.Close();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error creating case: " + ex.Message);
+                if (connection.State == System.Data.ConnectionState.Open)
+                {
+                    connection.Close();
+                }
             }
+
             return newCase;
         }
+
         // Get details of a specific case
         public Case GetCaseDetails(int caseId)
         {
             SqlConnection connection = new SqlConnection(conn);
-            Case caseDetails = new Case();
+            Case caseDetails = null;
+
             try
             {
-                
-                caseDetails.CaseId = caseId;
-                caseDetails.CaseDescription = "Case details for ID: " + caseId;
+                connection.Open();
+
+                // 1. Retrieve case details from the Cases table
+                using (SqlCommand cmd = new SqlCommand("SELECT CaseID, CaseDescription, CreatedDate, Status FROM Cases WHERE CaseID = @caseId", connection))
+                {
+                    cmd.Parameters.AddWithValue("@caseId", caseId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            // Initialize the caseDetails object if data is found
+                            caseDetails = new Case
+                            {
+                                CaseId = (int)reader["CaseID"],
+                                CaseDescription = reader["CaseDescription"].ToString(),
+                                CreatedDate = (DateTime)reader["CreatedDate"],
+                                Status = reader["Status"].ToString(),
+                                Incidents = new List<Incident>() // Initialize the incidents list
+                            };
+                        }
+                        else
+                        {
+                            throw new Exception($"No case found with CaseID {caseId}.");
+                        }
+                    }
+                }
+
+                // 2. Retrieve associated incidents from Case_Incidents and Incidents tables
+                using (SqlCommand cmd = new SqlCommand(@"
+            SELECT i.IncidentID, i.IncidentType, i.IncidentDate, i.Location, i.Description, i.Status 
+            FROM Case_Incidents ci 
+            JOIN Incidents i ON ci.IncidentID = i.IncidentID
+            WHERE ci.CaseID = @caseId", connection))
+                {
+                    cmd.Parameters.AddWithValue("@caseId", caseId);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            // Add each related incident to the caseDetails object's Incidents list
+                            Incident incident = new Incident
+                            {
+                                IncidentId = (int)reader["IncidentID"],
+                                IncidentType = reader["IncidentType"].ToString(),
+                                IncidentDate = (DateTime)reader["IncidentDate"],
+                                Location = reader["Location"].ToString(),
+                                Description = reader["Description"].ToString(),
+                                Status = reader["Status"].ToString()
+                            };
+
+                            caseDetails.Incidents.Add(incident);
+                        }
+                    }
+                }
+
+                connection.Close();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error retrieving case details: " + ex.Message);
+                if (connection.State == System.Data.ConnectionState.Open)
+                {
+                    connection.Close();
+                }
             }
+
             return caseDetails;
         }
+
 
         // Update case details
         public bool UpdateCaseDetails(Case updatedCase)
@@ -307,6 +426,22 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
             }
 
             return cases;
+        }
+
+        public Incident GetIncidentById(int incidentId)
+        {
+
+            Incident incident = new Incident();
+            Console.WriteLine($"Incident ID: {incident.IncidentId}");
+
+            if (incidentId == incident.IncidentId)
+            {
+                return incident;
+            }
+            else
+            {
+                throw new IncidentNumberNotFoundException("enter correct incident ID");
+            }
         }
     }
 }

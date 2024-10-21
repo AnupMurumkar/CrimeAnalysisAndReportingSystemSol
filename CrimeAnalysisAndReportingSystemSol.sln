@@ -3,15 +3,20 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrimeAnalysisAndReportingSystem", "CrimeAnalysisAndReportingSystem\CrimeAnalysisAndReportingSystem.csproj", "{9B2B6047-D7FB-4BD6-AE40-637E98173BA6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Entity", "Entity\Entity.csproj", "{2FA3EE95-57FD-483C-A9BC-B60C94F9EF4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entity", "Entity\Entity.csproj", "{2FA3EE95-57FD-483C-A9BC-B60C94F9EF4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAO", "DAO\DAO.csproj", "{DF670C0F-1F32-4B35-AD90-FB82458A0000}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAO", "DAO\DAO.csproj", "{DF670C0F-1F32-4B35-AD90-FB82458A0000}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Util", "Util\Util.csproj", "{464748EF-F68E-49F6-A86C-153EE932EB4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "Util\Util.csproj", "{464748EF-F68E-49F6-A86C-153EE932EB4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Exceptions", "Exceptions\Exceptions.csproj", "{2932F84E-F4EC-4624-910F-9468FC8CF404}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Exceptions", "Exceptions\Exceptions.csproj", "{2932F84E-F4EC-4624-910F-9468FC8CF404}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MainModule", "MainModule\MainModule.csproj", "{9870B531-117C-4F62-84FE-5FBF88673298}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2FA3EE95-57FD-483C-A9BC-B60C94F9EF4F} = {2FA3EE95-57FD-483C-A9BC-B60C94F9EF4F}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test2", "Test2\Test2.csproj", "{3A544C58-7F64-4F2A-8D99-03ECF40FEBE4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +24,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9B2B6047-D7FB-4BD6-AE40-637E98173BA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9B2B6047-D7FB-4BD6-AE40-637E98173BA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9B2B6047-D7FB-4BD6-AE40-637E98173BA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9B2B6047-D7FB-4BD6-AE40-637E98173BA6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2FA3EE95-57FD-483C-A9BC-B60C94F9EF4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2FA3EE95-57FD-483C-A9BC-B60C94F9EF4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FA3EE95-57FD-483C-A9BC-B60C94F9EF4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,6 +40,14 @@ Global
 		{2932F84E-F4EC-4624-910F-9468FC8CF404}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2932F84E-F4EC-4624-910F-9468FC8CF404}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2932F84E-F4EC-4624-910F-9468FC8CF404}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9870B531-117C-4F62-84FE-5FBF88673298}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9870B531-117C-4F62-84FE-5FBF88673298}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9870B531-117C-4F62-84FE-5FBF88673298}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9870B531-117C-4F62-84FE-5FBF88673298}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A544C58-7F64-4F2A-8D99-03ECF40FEBE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A544C58-7F64-4F2A-8D99-03ECF40FEBE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A544C58-7F64-4F2A-8D99-03ECF40FEBE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A544C58-7F64-4F2A-8D99-03ECF40FEBE4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
