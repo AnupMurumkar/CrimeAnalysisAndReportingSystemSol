@@ -64,6 +64,8 @@ namespace CrimeAnalysisAndReportingSystemSol.Main
                     Console.WriteLine($"{incident.IncidentId}: {incident.Description}");
                 }
 
+
+
                 // 5. Generate an incident report
                 Console.WriteLine("Enter Incident ID to generate a report:");
                 int incidentIdForReport = int.Parse(Console.ReadLine());
