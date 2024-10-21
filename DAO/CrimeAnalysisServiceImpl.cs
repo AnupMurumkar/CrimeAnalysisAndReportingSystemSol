@@ -1,4 +1,5 @@
 ﻿using CrimeAnalysisAndReportingSystemSol.Entity;
+using CrimeAnalysisAndReportingSystemSol.Exceptions;
 using CrimeAnalysisAndReportingSystemSol.Util;
 using System;
 using System.Collections.Generic;
@@ -34,8 +35,6 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     cmd.Parameters.AddWithValue("@status", incident.Status);
                     cmd.Parameters.AddWithValue("@victimId", incident.VictimId);
                     cmd.Parameters.AddWithValue("@suspectId", incident.SuspectId);
-                    
-
 
                     connection.Open();
                     int rows = cmd.ExecuteNonQuery();
@@ -44,9 +43,14 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     return rows > 0;
                 }
             }
+            catch (SqlException sqlEx)
+            {
+                Console.WriteLine("SQL Error creating incident: " + sqlEx.Message);
+                return false;
+            }
             catch (Exception ex)
             {
-                Console.WriteLine("Error creating incident: " + ex.Message);
+                Console.WriteLine("General Error creating incident: " + ex.Message);
                 return false;
             }
         }
@@ -66,12 +70,27 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     int rows = cmd.ExecuteNonQuery();
                     connection.Close();
 
+                    if (rows == 0)
+                    {
+                        throw new IncidentNumberNotFoundException($"Incident with ID {incidentId} not found.");
+                    }
+
                     return rows > 0;
                 }
             }
+            catch (IncidentNumberNotFoundException ex)
+            {
+                Console.WriteLine("Custom Error: " + ex.Message);
+                return false;
+            }
+            catch (SqlException sqlEx)
+            {
+                Console.WriteLine("SQL Error updating incident status: " + sqlEx.Message);
+                return false;
+            }
             catch (Exception ex)
             {
-                Console.WriteLine("Error updating incident status: " + ex.Message);
+                Console.WriteLine("General Error updating incident status: " + ex.Message);
                 return false;
             }
         }
@@ -110,9 +129,13 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     connection.Close();
                 }
             }
+            catch (SqlException sqlEx)
+            {
+                Console.WriteLine("SQL Error retrieving incidents: " + sqlEx.Message);
+            }
             catch (Exception ex)
             {
-                Console.WriteLine("Error retrieving incidents: " + ex.Message);
+                Console.WriteLine("General Error retrieving incidents: " + ex.Message);
             }
 
             return incidents;
@@ -132,6 +155,11 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     connection.Open();
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
+                        if (!reader.HasRows)
+                        {
+                            throw new IncidentNumberNotFoundException($"No incidents found with type {incidentType}.");
+                        }
+
                         while (reader.Read())
                         {
                             Incident incident = new Incident
@@ -151,9 +179,17 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
                     connection.Close();
                 }
             }
+            catch (IncidentNumberNotFoundException ex)
+            {
+                Console.WriteLine("Custom Error: " + ex.Message);
+            }
+            catch (SqlException sqlEx)
+            {
+                Console.WriteLine("SQL Error searching incidents: " + sqlEx.Message);
+            }
             catch (Exception ex)
             {
-                Console.WriteLine("Error searching incidents: " + ex.Message);
+                Console.WriteLine("General Error searching incidents: " + ex.Message);
             }
 
             return incidents;
@@ -166,12 +202,11 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
             Report report = new Report();
             try
             {
-                
-                report.ReportId = new Random().Next(1000, 9999); 
+                report.ReportId = new Random().Next(1000, 9999);
                 report.IncidentId = incident.IncidentId;
                 report.ReportDetails = $"Report for Incident: {incident.Description}\nLocation: {incident.Location}\nDate: {incident.IncidentDate}\nStatus: {incident.Status}";
-                report.ReportDate = DateTime.Now; 
-                report.Status = "Draft"; 
+                report.ReportDate = DateTime.Now;
+                report.Status = "Draft";
             }
             catch (Exception ex)
             {
@@ -179,7 +214,6 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
             }
             return report;
         }
-
         // Create a new case and associate it with incidents
         public Case CreateCase(string caseDescription, ICollection<Incident> incidents)
         {
@@ -241,7 +275,7 @@ namespace CrimeAnalysisAndReportingSystemSol.Dao
             }
         }
 
-        List<Case> ICrimeAnalysisService.GetAllCases()
+        public List<Case> GetAllCases()
         {
             SqlConnection connection = new SqlConnection(conn);
             List<Case> cases = new List<Case>();
